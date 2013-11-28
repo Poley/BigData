@@ -18,17 +18,17 @@ public class Reducer
 			InterruptedException {
 		
 		Put put = new Put(key.get());
-		byte[] artid = key.get();
 		//put.add(Bytes.toBytes("q1"), Bytes.toBytes("art_id"), artid);
 		
 		for (ImmutableBytesWritable v : values) {
 
 			byte[] revid = v.get();
-			put.add(Bytes.toBytes("q1"), artid, revid);
+			put.add(Bytes.toBytes("q1"), (Bytes.toBytes("REV")), revid);
 			System.out.println(Bytes.toLong(key.get())
 					+ " " + Bytes.toLong(v.get()));
+			context.write(null, put);
 			
 		}
-		context.write(null, put);
+		
 	}
 }

@@ -41,7 +41,7 @@ public class Query extends Configured implements Tool {
 				Reducer.class, job);
 		job.setNumReduceTasks(10);
 		
-		int i = 0;
+		int rows = 10;
 		
 		if (job.waitForCompletion(true)){
 			HTable hTable = new HTable(conf, "0801466p");
@@ -49,17 +49,13 @@ public class Query extends Configured implements Tool {
 			ResultScanner scanner = hTable.getScanner(Bytes.toBytes("q1"));
 
 			for (Result res : scanner) {
-				i++;
+				
 				byte[] artid = res.getRow();
 				//byte[] artid = res.getValue(Bytes.toBytes("q1"),Bytes.toBytes("art_id"));
-				byte[] revid = res.getValue(Bytes.toBytes("q1"),artid);
-				for (KeyValue k : res.list()){
-					byte[] x = k.getValue();
-					System.out.println(Bytes.toLong(x));
-				}
+				byte[] revid = res.getValue(Bytes.toBytes("q1"),Bytes.toBytes("REV"));
 				//if ( Bytes.toInt(sum)>1)
-					System.out.println("ART_ID: " + Bytes.toLong(artid) + " REV_ID: " + Bytes.toLong(revid) + "\n");
-				if (i > 10)
+					System.out.println(Bytes.toLong(artid) + " " + Bytes.toLong(revid) + "\n");
+				if (--rows == 0)
 					break;
 
 			}
