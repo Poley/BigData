@@ -1,5 +1,9 @@
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -41,43 +45,57 @@ public class Query extends Configured implements Tool {
 				IntWritable.class, job);
 		TableMapReduceUtil.initTableReducerJob("0801466p",
 				Reducer.class, job);
-		job.setNumReduceTasks(4);
+		job.setNumReduceTasks(4);		
 		
-		job.waitForCompletion(true);
+		int rows = conf.getInt("K", 5);
 		
-		Job job2 = new Job(conf);
-		job2.setJarByClass(Query.class);
-		
-		Scan scan2 = new Scan();
-		scan2.addColumn(Bytes.toBytes("q4"), Bytes.toBytes("sum"));
-		scan2.setCaching(100);
-		scan2.setCacheBlocks(false); // Always set this to false for MR jobs!
-		
-		TableMapReduceUtil.initTableMapperJob("0801466p", scan2,
-				Mapper2.class, IntWritable.class,
-				CombinedValue.class, job2);
-		TableMapReduceUtil.initTableReducerJob("0801466p",
-				Reducer2.class, job2);
-		job2.setNumReduceTasks(1);
-		
-		int rows = 10;
-		
-		if (job2.waitForCompletion(true)){
+		if (job.waitForCompletion(true)){
 			HTable hTable = new HTable(conf, "0801466p");
 			
-			ResultScanner scanner = hTable.getScanner(Bytes.toBytes("q5"));
+			ResultScanner scanner = hTable.getScanner(Bytes.toBytes("q4"));
+			
+			List<Result> results = new ArrayList<Result>();
 
 			for (Result res : scanner) {
+				results.add(res);
+			}
 				
-				byte[] artid = res.getRow();
+				//byte[] artid = res.getRow();
 				//byte[] artid = res.getValue(Bytes.toBytes("q1"),Bytes.toBytes("art_id"));
-				byte[] sum = res.getValue(Bytes.toBytes("q5"),Bytes.toBytes("count"));
-				//if ( Bytes.toInt(sum)>1)
-					System.out.println(Bytes.toInt(artid) + " " + Bytes.toInt(sum) + "\n");
+				//byte[] sum = res.getValue(Bytes.toBytes("q4"),Bytes.toBytes("sum"));
+				
+				//System.out.println(Bytes.toLong(artid) + " " + Bytes.toInt(sum) + "\n");
+				//if (--rows == 0)
+				//	break;
+			
+			class ResultComparator implements Comparator<Result>{
+				@Override
+				public int compare(Result arg0, Result arg1) {
+					int sum1 = Bytes.toInt(arg0.getValue(Bytes.toBytes("q4"),Bytes.toBytes("sum")));
+					int sum2 = Bytes.toInt(arg1.getValue(Bytes.toBytes("q4"),Bytes.toBytes("sum")));
+					long art1 = Bytes.toLong(arg0.getRow());
+					long art2 = Bytes.toLong(arg1.getRow());
+					return 	sum1 > sum2 ? 1 : 
+							sum1 < sum2 ? -1 :
+							art1 > art2 ? -1 :
+							1;
+					
+					
+				}
+			}
+
+			Collections.sort(results, new ResultComparator());
+			
+			Collections.reverse(results);
+			
+			for (Result res: results){
+				byte[] artid = res.getRow();
+				byte[] sum = res.getValue(Bytes.toBytes("q4"),Bytes.toBytes("sum"));
+				System.out.println(Bytes.toLong(artid) + " " + Bytes.toInt(sum) + "\n");
 				if (--rows == 0)
 					break;
-
 			}
+			
 			scanner.close();
 			hTable.close();
 			return 0;

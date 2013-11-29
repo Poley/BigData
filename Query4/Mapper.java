@@ -44,7 +44,7 @@ IntWritable> {
 		}
 		
 		if (rowkey != null && (startDate.before(revisionDate) && revisionDate.before(endDate)))
-			context.write(new ImmutableBytesWritable(rowkey), one	);
+			context.write(new ImmutableBytesWritable(Arrays.copyOfRange(rowkey, 0, 8)), one	);
 		
 	}
 }

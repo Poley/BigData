@@ -29,7 +29,7 @@ public class Reducer
 
 		put.add(Bytes.toBytes("q4"), (Bytes.toBytes("sum")),
 				(Bytes.toBytes(sum)));
-		System.out.println(Bytes.toInt(key.get()) + " " + sum);
+		System.out.println(Bytes.toLong(key.get()) + " " + sum);
 		
 		//if (sum>k)
 			context.write(null, put);
